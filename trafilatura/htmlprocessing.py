@@ -49,6 +49,9 @@ def tree_cleaning(tree, options):
     # determine cleaning strategy, use lists to keep it deterministic
     cleaning_list, stripping_list = \
         MANUALLY_CLEANED.copy(), MANUALLY_STRIPPED.copy()
+    if options.math:
+        cleaning_list = [x for x in cleaning_list if x != 'math']
+        stripping_list = [x for x in stripping_list if x != 'math']
     if options.tables is False:
         cleaning_list.extend(['table', 'td', 'th', 'tr'])
     if options.images is True:

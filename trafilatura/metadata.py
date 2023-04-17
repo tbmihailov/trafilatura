@@ -28,14 +28,14 @@ class Document:
     'title', 'author', 'url', 'hostname', 'description', 'sitename',
     'date', 'categories', 'tags', 'fingerprint', 'id', 'license',
     'body', 'comments', 'commentsbody', 'raw_text', 'text',
-    'language', 'image', 'pagetype'  # 'locale'?
+    'language', 'image', 'pagetype', 'robots'  # 'locale'?
     ]
     # consider dataclasses for Python 3.7+
     def __init__(self):
         for slot in self.__slots__:
             setattr(self, slot, None)
 
-    def set_attributes(self, title, author, url, description, site_name, image, pagetype, tags):
+    def set_attributes(self, title, author, url, description, site_name, image, pagetype, tags, robots=None):
         "Helper function to (re-)set a series of attributes."
         if title:
             self.title = title
@@ -53,6 +53,8 @@ class Document:
             self.pagetype = pagetype
         if tags:
             self.tags = tags
+        if robots:
+            self.robots = robots
 
     def clean_and_trim(self):
         "Limit text length and trim the attributes."
@@ -203,6 +205,7 @@ def examine_meta(tree):
     metadata = Document()  # alt: Metadata()
     # bootstrap from potential OpenGraph tags
     title, author, url, description, site_name, image, pagetype = extract_opengraph(tree)
+    robots = None  # Store robots defined in the meta e.g. <meta property="robots" content="nofollow">
     # test if all values not assigned in the following have already been assigned
     if all((title, author, url, description, site_name, image)):
         metadata.set_attributes(title, author, url, description, site_name, image, pagetype, None)  # tags
@@ -229,6 +232,9 @@ def examine_meta(tree):
                 site_name = site_name or content_attr
             elif elem.get('property') in METANAME_IMAGE:
                 image = image or content_attr
+            elif elem.get('property') == "robots":
+                robots = content_attr
+
         # name attribute
         elif 'name' in elem.attrib:
             name_attr = elem.get('name').lower()
@@ -254,6 +260,8 @@ def examine_meta(tree):
             # keywords
             elif name_attr in METANAME_TAG:  # 'page-topic'
                 tags.append(normalize_tags(content_attr))
+            elif name_attr == "robots":
+                robots = content_attr
         elif 'itemprop' in elem.attrib:
             if elem.get('itemprop') == 'author':
                 author = normalize_authors(author, content_attr)
@@ -276,7 +284,7 @@ def examine_meta(tree):
     if site_name is None and backup_sitename is not None:
         site_name = backup_sitename
     # copy
-    metadata.set_attributes(title, author, url, description, site_name, image, pagetype, tags)
+    metadata.set_attributes(title, author, url, description, site_name, image, pagetype, tags, robots)
     return metadata
 
 
