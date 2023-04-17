@@ -59,12 +59,12 @@ class Extractor:
     "Defines a class to store all extraction options."
     __slots__ = [
     'config', 'fast', 'precision', 'recall', 'comments',
-    'formatting', 'links', 'images', 'tables', 'dedup', 'lang',
+    'formatting', 'links', 'images', 'tables', 'dedup', 'lang', 'math'
     ]
     # consider dataclasses for Python 3.7+
     def __init__(self, config, fast, precision, recall, comments,
                  formatting, links, images, tables, deduplicate,
-                 target_language):
+                 target_language, math=False):
         self.config = config
         self.fast = fast
         self.precision = precision
@@ -76,6 +76,7 @@ class Extractor:
         self.tables = tables
         self.dedup = deduplicate
         self.lang = target_language
+        self.math = math
 
 
 def handle_titles(element, options):
@@ -807,8 +808,8 @@ def determine_returnstring(document, output_format, include_formatting, tei_vali
 def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
                     favor_precision=False, favor_recall=False,
                     include_comments=True, output_format='python', target_language=None,
-                    include_tables=True, include_images=False, include_formatting=False,
-                    include_links=False, deduplicate=False,
+                    include_tables=True, include_math=False, include_images=False, 
+                    include_formatting=False, include_links=False, deduplicate=False,
                     date_extraction_params=None,
                     only_with_metadata=False, with_metadata=False,
                     max_tree_size=None, url_blacklist=None, author_blacklist=None,
@@ -827,6 +828,7 @@ def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
             Other values: "txt", "csv", "json", "xml", or "xmltei".
         target_language: Define a language to discard invalid documents (ISO 639-1 format).
         include_tables: Take into account information within the HTML <table> element.
+        include_math: Keep math tags.
         include_images: Take images into account (experimental).
         include_formatting: Keep structural elements related to formatting
             (present in XML format, converted to markdown otherwise).
@@ -899,7 +901,7 @@ def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
         options = Extractor(config, no_fallback, favor_precision, favor_recall,
                             include_comments, include_formatting, include_links,
                             include_images, include_tables, deduplicate,
-                            target_language)
+                            target_language, math=include_math)
 
         # backup (or not) for further processing
         tree_backup_1 = deepcopy(tree) if no_fallback is False else None
