@@ -162,7 +162,7 @@ def test_txttocsv():
     assert extract(mystring, output_format='json', include_comments=False, config=ZERO_CONFIG).endswith('}')
     # bare extraction for python
     result = bare_extraction(mystring, config=ZERO_CONFIG, as_dict=True)
-    assert isinstance(result, dict) and len(result) == 20
+    assert isinstance(result, dict) and len(result) == 22
 
 
 def test_exotic_tags(xmloutput=False):

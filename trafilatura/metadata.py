@@ -28,7 +28,7 @@ class Document:
     'title', 'author', 'url', 'hostname', 'description', 'sitename',
     'date', 'categories', 'tags', 'fingerprint', 'id', 'license',
     'body', 'comments', 'commentsbody', 'raw_text', 'text',
-    'language', 'image', 'pagetype', 'robots'  # 'locale'?
+    'language', 'image', 'pagetype', 'robots', 'clean_html'  # 'locale'?
     ]
     # consider dataclasses for Python 3.7+
     def __init__(self):

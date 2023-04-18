@@ -805,7 +805,7 @@ def determine_returnstring(document, output_format, include_formatting, tei_vali
     return normalize_unicode(returnstring)
 
 
-def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
+def  bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
                     favor_precision=False, favor_recall=False,
                     include_comments=True, output_format='python', target_language=None,
                     include_tables=True, include_math=False, include_images=False, 
@@ -813,7 +813,7 @@ def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
                     date_extraction_params=None,
                     only_with_metadata=False, with_metadata=False,
                     max_tree_size=None, url_blacklist=None, author_blacklist=None,
-                    as_dict=True, config=DEFAULT_CONFIG):
+                    as_dict=True, config=DEFAULT_CONFIG, include_clean_html=False):
     """Internal function for text extraction returning bare Python variables.
 
     Args:
@@ -909,6 +909,10 @@ def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
 
         # clean + use LXML cleaner
         cleaned_tree = tree_cleaning(tree, options)
+                 
+        if include_clean_html:
+            document.clean_html = tostring(cleaned_tree).decode()
+        
         cleaned_tree_backup = deepcopy(cleaned_tree)
 
         # convert tags, the rest does not work without conversion
@@ -948,7 +952,7 @@ def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
         if len_comments < config.getint('DEFAULT', 'MIN_EXTRACTED_COMM_SIZE'):
             LOGGER.info('not enough comments %s', url)
         if len_text < config.getint('DEFAULT', 'MIN_OUTPUT_SIZE') and len_comments < config.getint('DEFAULT',
-                                                                                                   'MIN_OUTPUT_COMM_SIZE'):
+                                                                                                'MIN_OUTPUT_COMM_SIZE'):
             LOGGER.info('text and comments not long enough: %s %s', len_text, len_comments)
             raise ValueError
 
@@ -963,7 +967,6 @@ def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
             if is_not_target_lang is True:
                 LOGGER.error('wrong language for URL %s', url)
                 raise ValueError
-
     except (TypeError, ValueError):
         LOGGER.info('discarding data for url: %s', url)  # document.url , record_id
         return None
@@ -975,6 +978,7 @@ def bare_extraction(filecontent, url=None, no_fallback=False,  # fast=False,
             document.comments = xmltotxt(commentsbody, include_formatting)
     else:
         document.raw_text, document.body, document.commentsbody = temp_text, postbody, commentsbody
+
     if as_dict is True:
         document = {slot: getattr(document, slot, None) for slot in document.__slots__}
     return document
@@ -988,13 +992,14 @@ def timeout_handler(signum, frame):
 def extract(filecontent, url=None, record_id=None, no_fallback=False,
             favor_precision=False, favor_recall=False,
             include_comments=True, output_format='txt',
-            tei_validation=False, target_language=None,
-            include_tables=True, include_images=False, include_formatting=False,
+            tei_validation=False, target_language=None, 
+            include_tables=True, include_math=False,
+            include_images=False, include_formatting=False,
             include_links=False, deduplicate=False,
             date_extraction_params=None,
             only_with_metadata=False, with_metadata=False,
             max_tree_size=None, url_blacklist=None, author_blacklist=None,
-            settingsfile=None, config=DEFAULT_CONFIG,
+            settingsfile=None, config=DEFAULT_CONFIG, include_clean_html=False,
             **kwargs):
     """Main function exposed by the package:
        Wrapper for text extraction and conversion to chosen output format.
@@ -1025,6 +1030,7 @@ def extract(filecontent, url=None, record_id=None, no_fallback=False,
         author_blacklist: Provide a blacklist of Author Names as set() to filter out authors.
         settingsfile: Use a configuration file to override the standard settings.
         config: Directly provide a configparser configuration.
+        include_clean_html: Include a fields clean_html in the result. This is the html with cleaned unnecessary tags.
 
     Returns:
         A string in the desired format or None.
@@ -1060,7 +1066,7 @@ def extract(filecontent, url=None, record_id=None, no_fallback=False,
             favor_precision=favor_precision, favor_recall=favor_recall,
             include_comments=include_comments, output_format=output_format,
             target_language=target_language, include_tables=include_tables,
-            include_images=include_images,
+            include_math=include_math, include_images=include_images,
             include_formatting=include_formatting, include_links=include_links,
             deduplicate=deduplicate,
             date_extraction_params=date_extraction_params,
@@ -1068,6 +1074,7 @@ def extract(filecontent, url=None, record_id=None, no_fallback=False,
             max_tree_size=max_tree_size, url_blacklist=url_blacklist,
             author_blacklist=author_blacklist,
             as_dict=False, config=config,
+            include_clean_html=include_clean_html,
         )
     except RuntimeError:
         LOGGER.error('Processing timeout for %s', url)
